@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT_DIR="${SCRIPT_DIR//$'\r'/}"
 cd "$SCRIPT_DIR"
 
-REQUIRED_MAJOR="v20"
+REQUIRED_MAJOR="v24"
 CURRENT_VER="$(node -v 2>/dev/null)"
 CURRENT_MAJOR="${CURRENT_VER%%.*}"
 
