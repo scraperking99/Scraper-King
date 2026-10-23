@@ -1,10 +1,23 @@
 #!/data/data/com.termux/files/usr/bin/bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Self-healing CRLF protection
+if grep -q $'\r' "$0" 2>/dev/null; then
+    tr -d '\r' < "$0" > "$0.tmp" && mv "$0.tmp" "$0" && chmod +x "$0"
+    exec bash "$0" "$@"
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT_DIR="${SCRIPT_DIR//$'\r'/}"
 cd "$SCRIPT_DIR"
 
-if ! command -v node >/dev/null 2>&1; then
-    echo "[*] Installing Node.js..."
-    pkg update -y && pkg install nodejs-lts -y
+REQUIRED_MAJOR="v20"
+CURRENT_VER="$(node -v 2>/dev/null)"
+CURRENT_MAJOR="${CURRENT_VER%%.*}"
+
+if [ -z "$CURRENT_VER" ] || [ "$CURRENT_MAJOR" != "$REQUIRED_MAJOR" ]; then
+    echo "[*] Node version mismatch (${CURRENT_VER:-none} detected). Installing required LTS engine ($REQUIRED_MAJOR)..."
+    pkg uninstall -y nodejs nodejs-lts >/dev/null 2>&1
+    pkg update -y && pkg install -y nodejs-lts
+    rm -rf node_modules package-lock.json 2>/dev/null
 fi
 
 if ! node -e "require('bytenode')" >/dev/null 2>&1; then
