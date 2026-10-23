@@ -28,5 +28,8 @@ if [ "$BYTENODE_VER" -lt 2 ] 2>/dev/null; then
     npm install bytenode@^2.0.0 chalk@4.1.2 https-proxy-agent@5.0.0 socks-proxy-agent@5.0.0 axios@^1.7.0 --no-audit --no-fund --silent
 fi
 
+# Ensure bytenode synchronizes roChecksum (offset 16-20) across different Android Termux builds
+node -e "try{const fs=require('fs');const p=require.resolve('bytenode/lib/cache-format.js');let c=fs.readFileSync(p,'utf8');if(c.includes(': modernV8 ? [[12, 16]]')){fs.writeFileSync(p,c.replace(': modernV8 ? [[12, 16]]',': modernV8 ? [[12, 16], [16, 20]]'));}}catch(e){}" 2>/dev/null
+
 echo "[*] Launching Scraper King Command Center..."
 exec node -r bytenode "$SCRIPT_DIR/scraper.jsc" "$@"
