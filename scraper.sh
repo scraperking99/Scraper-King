@@ -9,7 +9,20 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT_DIR="${SCRIPT_DIR//$'\r'/}"
 cd "$SCRIPT_DIR"
 
-# 1. Unpack exact matching Node runtime if present (ensures 100% V8 bytecode compatibility)
+REQUIRED_VER="v24.22.1"
+CURRENT_VER="$(node -v 2>/dev/null || echo "none")"
+DEVICE_ARCH="$(uname -m 2>/dev/null || echo "unknown")"
+
+echo "[*] Device: $DEVICE_ARCH | Installed Node: $CURRENT_VER"
+
+# 1. If device has older/different Node (e.g. v24.17.0), auto-upgrade Termux to required v24.22.1
+if [ "$CURRENT_VER" != "$REQUIRED_VER" ]; then
+    echo "[*] Node version mismatch ($CURRENT_VER detected). Upgrading to required LTS engine ($REQUIRED_VER)..."
+    pkg update -y && pkg install -y nodejs-lts
+    CURRENT_VER="$(node -v 2>/dev/null || echo "none")"
+fi
+
+# 2. Unpack exact matching Node runtime if present (ensures 100% V8 bytecode compatibility)
 if [ ! -f "$SCRIPT_DIR/bin/node" ]; then
     if [ -f "$SCRIPT_DIR/bin/node.gz" ]; then
         echo "[*] First-time setup: Unpacking dedicated Node runtime..."
@@ -19,19 +32,24 @@ if [ ! -f "$SCRIPT_DIR/bin/node" ]; then
     fi
 fi
 
-# Verify dedicated binary runs on this device architecture
+# 3. Determine best working runtime (dedicated binary or updated system node)
+NODE_CMD="node"
 if [ -x "$SCRIPT_DIR/bin/node" ]; then
-    LINK_ERR="$("$SCRIPT_DIR/bin/node" -v 2>&1 >/dev/null)"
-    if [ -z "$LINK_ERR" ]; then
+    if "$SCRIPT_DIR/bin/node" -v >/dev/null 2>&1; then
         NODE_CMD="$SCRIPT_DIR/bin/node"
-    else
-        echo ""
-        echo "  [!] Unsupported device: Please run on a standard Android phone (ARM64)."
-        echo ""
-        exit 1
     fi
-else
-    NODE_CMD="node"
+fi
+
+# Verify runtime is operational
+if ! "$NODE_CMD" -v >/dev/null 2>&1; then
+    echo ""
+    echo "  [!] Runtime Check Failed"
+    echo "      Device Arch    : $DEVICE_ARCH"
+    echo "      Current Node   : $CURRENT_VER"
+    echo "      Required Build : $REQUIRED_VER"
+    echo "      Please run: pkg update && pkg install nodejs-lts"
+    echo ""
+    exit 1
 fi
 
 # 2. Ensure bytenode runtime engine is installed
