@@ -22,7 +22,7 @@ fi
 
 if ! node -e "require('bytenode')" >/dev/null 2>&1; then
     echo "[*] Setting up bytenode engine..."
-    npm install bytenode@^1.6.0 chalk@4.1.2 https-proxy-agent@5.0.0 socks-proxy-agent@5.0.0 axios@^1.7.0 --no-audit --no-fund --silent
+    npm install bytenode@^2.0.0 chalk@4.1.2 https-proxy-agent@5.0.0 socks-proxy-agent@5.0.0 axios@^1.7.0 --no-audit --no-fund --silent
 fi
 
 echo "[*] Launching Scraper King Command Center..."
