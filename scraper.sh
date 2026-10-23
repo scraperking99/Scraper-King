@@ -20,16 +20,18 @@ if [ -z "$CURRENT_VER" ] || [ "$CURRENT_MAJOR" != "$REQUIRED_MAJOR" ]; then
     rm -rf node_modules package-lock.json 2>/dev/null
 fi
 
-# Check bytenode version — must be 2.x for Node 24 V8 header compatibility
+if ! node -e "require('bytenode')" >/dev/null 2>&1; then
+    echo "[*] Setting up bytenode engine..."
+    npm install bytenode@^2.0.0 chalk@4.1.2 https-proxy-agent@5.0.0 socks-proxy-agent@5.0.0 axios@^1.7.0 --no-audit --no-fund --silent
+fi
+
+# Ensure bytenode v2.x is installed (v1.x is incompatible with Node 24 V8 bytecode headers)
 BYTENODE_VER="$(node -e "try{const v=require('bytenode/package.json').version;const major=parseInt(v.split('.')[0],10);process.stdout.write(String(major))}catch(e){process.stdout.write('0')}" 2>/dev/null)"
-if [ "$BYTENODE_VER" -lt 2 ] 2>/dev/null; then
+if [ "${BYTENODE_VER}" -lt 2 ] 2>/dev/null; then
     echo "[*] Upgrading bytenode to v2 (Node 24 compatibility)..."
     rm -rf node_modules/bytenode node_modules/.cache 2>/dev/null
     npm install bytenode@^2.0.0 chalk@4.1.2 https-proxy-agent@5.0.0 socks-proxy-agent@5.0.0 axios@^1.7.0 --no-audit --no-fund --silent
 fi
-
-# Ensure bytenode synchronizes roChecksum (offset 16-20) across different Android Termux builds
-node -e "try{const fs=require('fs');const p=require.resolve('bytenode/lib/cache-format.js');let c=fs.readFileSync(p,'utf8');if(c.includes(': modernV8 ? [[12, 16]]')){fs.writeFileSync(p,c.replace(': modernV8 ? [[12, 16]]',': modernV8 ? [[12, 16], [16, 20]]'));}}catch(e){}" 2>/dev/null
 
 echo "[*] Launching Scraper King Command Center..."
 exec node -r bytenode "$SCRIPT_DIR/scraper.jsc" "$@"
