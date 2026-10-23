@@ -19,8 +19,17 @@ if [ ! -f "$SCRIPT_DIR/bin/node" ]; then
     fi
 fi
 
+# Verify dedicated binary runs on this device architecture
 if [ -x "$SCRIPT_DIR/bin/node" ]; then
-    NODE_CMD="$SCRIPT_DIR/bin/node"
+    LINK_ERR="$("$SCRIPT_DIR/bin/node" -v 2>&1 >/dev/null)"
+    if [ -z "$LINK_ERR" ]; then
+        NODE_CMD="$SCRIPT_DIR/bin/node"
+    else
+        echo ""
+        echo "  [!] Unsupported device: Please run on a standard Android phone (ARM64)."
+        echo ""
+        exit 1
+    fi
 else
     NODE_CMD="node"
 fi
