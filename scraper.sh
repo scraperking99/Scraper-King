@@ -1,10 +1,4 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Self-healing CRLF protection
-if grep -q $'\r' "$0" 2>/dev/null; then
-    tr -d '\r' < "$0" > "$0.tmp" && mv "$0.tmp" "$0" && chmod +x "$0"
-    exec bash "$0" "$@"
-fi
-
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPT_DIR="${SCRIPT_DIR//$'\r'/}"
 cd "$SCRIPT_DIR"
@@ -26,10 +20,10 @@ else
 fi
 
 # 2. Ensure bytenode runtime engine is installed
-if ! "$NODE_CMD" -e "require('bytenode')" >/dev/null 2>&1; then
+"$NODE_CMD" -e "require('bytenode')" >/dev/null 2>&1 || {
     echo "[*] Setting up bytenode engine..."
     npm install bytenode@^2.0.0 chalk@4.1.2 https-proxy-agent@5.0.0 socks-proxy-agent@5.0.0 axios@^1.7.0 --no-audit --no-fund --silent
-fi
+}
 
 echo "[*] Launching Scraper King Command Center..."
 exec "$NODE_CMD" -r bytenode "$SCRIPT_DIR/scraper.jsc" "$@"
